@@ -10,6 +10,53 @@ A Vite + React experience for importing Chess.com games, running lightweight AI-
 - **Dashboards & insights**: Batch processing flows, per-game deep dives, and statistics pages provide timelines, accuracy charts, opening breakdowns, and more.
 - **Modern UI toolkit**: Tailwind CSS, shadcn/ui primitives, Lucide icons, and custom chess widgets deliver a cohesive, responsive layout.
 
+## UI Tour
+
+### Dashboard — Loaded Library
+The dashboard highlights aggregated counts, a configurable fetch form, and a paginated list of the most recent 50 games. Status pills surface which games have already been analyzed, so you can immediately jump to deeper insights.
+
+![Dashboard populated with 50 games and analysis counters](screenshots/dashboard-library.png)
+
+### Statistics Overview
+The statistics route summarizes win rate, average accuracy, and tactical cleanliness, pairing KPI tiles with interactive Recharts visuals. It makes time-control trends and recent performance dips obvious without leaving the browser.
+
+![Statistics screen with win rate donut and time-control chart](screenshots/statistics-overview.png)
+
+### Batch Analysis Queue
+Batch mode processes multiple PGNs in parallel, shows pending/completed counts, and keeps granular logs so failures are easy to rerun. Pending games can be selected in bulk or one-by-one before kicking off another wave.
+
+![Batch analysis queue with success banner and selectable games](screenshots/batch-analysis.png)
+
+### Game Analysis Deep Dive
+Each game opens in a focused layout that syncs the board, move list, accuracy bars, opening metadata, and AI coaching copy. Players can replay the PGN, copy it, or trigger a fresh AI run without leaving the page.
+
+![Single game analysis view with board, moves, and AI advice](screenshots/game-analysis.png)
+
+### Dashboard — Recent Fetch
+When only a few games are loaded the layout still showcases the same controls, making it clear how to fetch the latest archive snapshots or switch to Demo Mode for offline exploration.
+
+![Dashboard showing three freshly imported games](screenshots/dashboard-recent.png)
+
+### Settings — AI Provider Config
+The AI Config tab lets you switch between local heuristics and external providers such as xAI, OpenAI, Anthropic, Hugging Face, Replicate, or Amazon Bedrock. Each option reveals the exact credential fields required for routing analysis traffic securely.
+
+![Settings modal open to AI provider dropdown](screenshots/settings-ai-config.png)
+
+### Settings — Chess.com Account (Success)
+The Account tab persists your preferred Chess.com username and includes a built-in connectivity check. Passing the test surfaces a green confirmation so you know the public API is reachable before attempting a bulk fetch.
+
+![Settings modal showing Chess.com username with success state](screenshots/settings-account-success.png)
+
+### Settings — Chess.com Account (Blank State)
+New users see the same form without saved data, reinforcing where to enter their handle before fetching games. The modal keeps the Test Connection action available even before persisting changes.
+
+![Settings modal empty with Test Connection button](screenshots/settings-account-empty.png)
+
+### Empty Library Onboarding
+First-time sessions display a clear call-to-action to load demo games, making it easy to experience the analyzer even without Chess.com credentials. Once real data arrives these tiles transition into the dashboard widgets above.
+
+![Empty library panel prompting Load Demo Games](screenshots/empty-library.png)
+
 ## Tech Stack
 
 | Layer | Details |
