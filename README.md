@@ -13,49 +13,49 @@ A Vite + React experience for importing Chess.com games, running lightweight AI-
 ## UI Tour
 
 ### Dashboard — Loaded Library
-This state shows 50 stored games, two completed analyses, and the fetch form prefilled for Hikaru’s last 60 days. Each card lists the opponent, opening (e.g., Najdorf, Berlin), and whether the analysis already finished, so it is obvious what to open next.
+This state shows a full library of 50 stored games with two completed analyses. The fetch form is prefilled for Hikaru’s last 60 days, and each card lists the opponent, opening (e.g., Najdorf, Berlin), and analysis status so it’s clear which game to open next.
 
-![Dashboard populated with 50 games and analysis counters](screenshots/dashboard-library.png)
+![Dashboard with 50 games loaded and analysis counters.](screenshots/dashboard-loaded-library.png)
 
 ### Statistics Overview
-KPIs summarize a 33.3% win rate, 87.5% average accuracy, and zero blunders/mistakes per game while the donut and bar charts surface result distribution and time-control mix (Blitz vs Bullet). It is a one-stop look at how recent study sessions are trending.
+Key metrics summarize a 33.3% win rate, 87.5% average accuracy, and zero blunders or mistakes per game. A donut chart shows the win/loss/draw breakdown, while the bar chart highlights the time-control mix between Blitz and Bullet.
 
-![Statistics screen with win rate donut and time-control chart](screenshots/statistics-overview.png)
+![Statistics screen with win-rate donut and time-control chart.](screenshots/statistics-overview.png)
 
 ### Batch Analysis Queue
-The batch view tracks three total games, two analyzed, and one still pending. Each PGN (Magnus vs Hikaru, Hikaru vs Caruana, etc.) keeps its own analyzed badge so you can rerun only the remaining ones or inspect the green success log at the top.
+The batch view tracks three total games, with two already analyzed and one still pending. Each PGN (Magnus vs Hikaru, Hikaru vs Caruana, etc.) keeps its own “Analyzed” badge so you can rerun only the remaining games, while the green banner confirms recent batch successes.
 
-![Batch analysis queue with success banner and selectable games](screenshots/batch-analysis.png)
+![Batch analysis queue with success banner and selectable games.](screenshots/batch-analysis-queue.png)
 
 ### Game Analysis Deep Dive
-Here the Hikaru vs Caruana Berlin Defense replay syncs the interactive board, move list, accuracy sliders, summary chips (50 moves, zero blunders/mistakes), opening code (C65), and AI coaching insight block so all critical data stays visible.
+The Hikaru vs Caruana Berlin Defense replay syncs the interactive board, move list, opening code (C65), and AI coach insights. Accuracy, summary chips (50 moves, zero blunders, zero mistakes), and time control all stay visible so you can review every move in context.
 
-![Single game analysis view with board, moves, and AI advice](screenshots/game-analysis.png)
+![Single-game analysis view with board, moves, and AI advice.](screenshots/game-analysis-deep-dive.png)
 
 ### Dashboard — Recent Fetch
-With only three games loaded, the dashboard still exposes the same controls plus quick-access cards for Magnus vs Hikaru, Hikaru vs Caruana, and Caruana vs Magnus. It is ideal for a light import before running batch analysis or statistics.
+With only three games loaded, the dashboard still offers the same fetch controls plus compact cards for Magnus vs Hikaru, Hikaru vs Caruana, and Caruana vs Magnus. It’s ideal for a small import before running batch analysis or checking statistics.
 
-![Dashboard showing three freshly imported games](screenshots/dashboard-recent.png)
+![Dashboard showing three freshly imported games.](screenshots/dashboard-recent-fetch.png)
 
 ### Settings — AI Provider Config
-The AI Config tab’s dropdown demonstrates every built-in integration—Local, xAI Grok, OpenAI, Anthropic (Claude), Hugging Face, Replicate, and Amazon Bedrock—so users know exactly which credentials they can store locally for richer analysis.
+The AI Config tab displays the full list of supported providers—Local (offline), xAI Grok, OpenAI, Anthropic (Claude), Hugging Face Inference API, Replicate, and Amazon Bedrock—so users know exactly which credentials they can plug in for richer analysis.
 
-![Settings modal open to AI provider dropdown](screenshots/settings-ai-config.png)
+![Settings modal open to AI provider dropdown.](screenshots/settings-ai-provider-config.png)
 
 ### Settings — Chess.com Account (Success)
-After entering a username, the Test Connection button confirms access to the Chess.com public API and surfaces a bright green “Connection successful!” banner. Saving here ensures the fetch form is auto-filled on future visits.
+After entering a Chess.com username, the Test Connection button verifies access to the public API and returns a bright green “Connection successful!” message. Saving these settings ensures the fetch form is auto-filled on future visits.
 
-![Settings modal showing Chess.com username with success state](screenshots/settings-account-success.png)
+![Settings modal showing Chess.com username with successful connection.](screenshots/settings-account-success.png)
 
 ### Settings — Chess.com Account (Blank State)
-This blank slate version of the same modal prompts newcomers to supply their handle first. The CTA hierarchy makes the Test Connection action obvious before any data is persisted.
+In the blank state, the account settings modal prompts new users to enter their Chess.com handle. The primary call-to-action is “Test Connection,” encouraging verification before any data is saved.
 
-![Settings modal empty with Test Connection button](screenshots/settings-account-empty.png)
+![Settings modal empty with Test Connection button.](screenshots/settings-account-blank.png)
 
 ### Empty Library Onboarding
-When the store is empty the right rail swaps to a “No games yet” call-to-action with a prominent “Load Demo Games” button, clarifying exactly how to explore the experience without authenticating to Chess.com.
+When no games are stored, the dashboard shows a “No games yet” message in the Recent Games panel and a prominent “Load Demo Games” button, making it clear how to explore the analyzer without connecting a Chess.com account.
 
-![Empty library panel prompting Load Demo Games](screenshots/empty-library.png)
+![Empty library state prompting users to load demo games.](screenshots/empty-library-onboarding.png)
 
 ## Tech Stack
 
