@@ -240,3 +240,7 @@ React Router definitions live in `src/pages/index.jsx`, and `src/main.jsx` wires
 - Add authentication or shareable reports.
 
 Until then, this README should give you everything needed to understand, run, and extend Chess Analyzer v2.
+
+## License
+
+License: This project is not open source. All rights reserved. Please contact [dentity@gmail.com](mailto:dentity@gmail.com) for commercial licensing. See `LICENSE` for the full proprietary notice.
