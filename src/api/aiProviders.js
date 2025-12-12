@@ -16,6 +16,12 @@ const JSON_INSTRUCTIONS = `Analyze this chess game PGN and respond with JSON usi
 }
 Return ONLY valid JSON.`;
 
+function buildQuestionPrompt(game, question) {
+  const truncatedPgn = game?.pgn?.substring(0, 4000) || '';
+  const trimmedQuestion = (question || '').trim() || 'Give me one practical improvement I should focus on for this game.';
+  return `You are a concise chess coach. Use the game PGN and answer the question in 2-4 sentences with 1 actionable takeaway.\nQuestion: ${trimmedQuestion}\nPGN:\n${truncatedPgn}`;
+}
+
 export const AI_PROVIDER_DEFINITIONS = [
   {
     id: 'local',
@@ -381,6 +387,268 @@ async function analyzeWithBedrock(game, settings) {
     text = json?.results?.[0]?.outputText || json?.completions?.[0]?.data?.text || raw;
   }
   return normalizeAnalysis(extractJsonFromText(text));
+}
+
+async function answerQuestionLocally(game, question) {
+  const analysis = await analyzeGameLocally(game);
+  const blunder = analysis?.blunders?.[0];
+  const mistake = analysis?.mistakes?.[0];
+  const hooks = [];
+  if (blunder) {
+    hooks.push(`Biggest swing: move ${blunder.move_number} (${blunder.move}) costing about ${blunder.evaluation_change} cp.`);
+  }
+  if (mistake) {
+    hooks.push(`Another miss: move ${mistake.move_number} (${mistake.move}).`);
+  }
+  const baseline = hooks.join(' ');
+  return (
+    `${question ? `Q: ${question}\n` : ''}` +
+    (baseline || 'Game looked steady; focus on reviewing critical moments and time usage.') +
+    ' Practical next step: replay those moves on a board and find a single safer alternative.'
+  ).trim();
+}
+
+async function askWithXAI(game, question, settings) {
+  if (!settings?.ai_api_key) {
+    throw new Error('Missing xAI API key');
+  }
+
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${settings.ai_api_key}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: settings.ai_model || 'grok-beta',
+      temperature: 0.5,
+      messages: [
+        { role: 'system', content: 'You are a concise chess coach. Use the PGN to answer clearly in 2-4 sentences.' },
+        { role: 'user', content: buildQuestionPrompt(game, question) }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`xAI error: ${errorText}`);
+  }
+
+  const payload = await response.json();
+  return unwrapChatContent(payload.choices?.[0]?.message?.content || '').trim();
+}
+
+async function askWithOpenAI(game, question, settings) {
+  if (!settings?.ai_api_key) {
+    throw new Error('Missing OpenAI API key');
+  }
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${settings.ai_api_key}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: settings.ai_model || 'gpt-4o-mini',
+      temperature: 0.4,
+      messages: [
+        { role: 'system', content: 'You are a concise chess coach. Cite the move numbers you reference.' },
+        { role: 'user', content: buildQuestionPrompt(game, question) }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenAI error: ${errorText}`);
+  }
+
+  const payload = await response.json();
+  return unwrapChatContent(payload.choices?.[0]?.message?.content || '').trim();
+}
+
+async function askWithAnthropic(game, question, settings) {
+  if (!settings?.ai_api_key) {
+    throw new Error('Missing Anthropic API key');
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': settings.ai_api_key,
+      'anthropic-version': settings.ai_model_version || '2023-06-01',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: settings.ai_model || 'claude-3-5-sonnet-20241022',
+      max_tokens: 400,
+      temperature: 0.4,
+      messages: [
+        {
+          role: 'user',
+          content: buildQuestionPrompt(game, question)
+        }
+      ]
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Anthropic error: ${errorText}`);
+  }
+
+  const payload = await response.json();
+  return unwrapChatContent(payload.content || payload.output || '').trim();
+}
+
+async function askWithHuggingFace(game, question, settings) {
+  if (!settings?.ai_api_key || !settings?.ai_model) {
+    throw new Error('Missing Hugging Face token or model');
+  }
+  const response = await fetch(`https://api-inference.huggingface.co/models/${settings.ai_model}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${settings.ai_api_key}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ inputs: buildQuestionPrompt(game, question) })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Hugging Face error: ${errorText}`);
+  }
+
+  const data = await response.json();
+  const text = Array.isArray(data)
+    ? data[0]?.generated_text || data[0]?.summary_text || JSON.stringify(data[0])
+    : data.generated_text || data.output_text || JSON.stringify(data);
+  return unwrapChatContent(text).trim();
+}
+
+async function askWithReplicate(game, question, settings) {
+  if (!settings?.ai_api_key || !settings?.ai_model_version || !settings?.ai_model) {
+    throw new Error('Missing Replicate configuration');
+  }
+
+  const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${settings.ai_api_key}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      version: settings.ai_model_version,
+      input: {
+        prompt: buildQuestionPrompt(game, question)
+      }
+    })
+  });
+
+  const created = await createResponse.json();
+  if (createResponse.status >= 400) {
+    throw new Error(created?.detail || 'Replicate request failed');
+  }
+
+  const result = await pollReplicatePrediction(created.id, settings.ai_api_key);
+  const output = Array.isArray(result.output) ? result.output.join('\n') : result.output;
+  return unwrapChatContent(output || '').trim();
+}
+
+async function askWithBedrock(game, question, settings) {
+  const { ai_access_key, ai_secret_key, ai_region, ai_model, ai_session_token } = settings || {};
+  if (!ai_access_key || !ai_secret_key || !ai_region || !ai_model) {
+    throw new Error('Missing AWS Bedrock credentials/config');
+  }
+
+  const client = new BedrockRuntimeClient({
+    region: ai_region,
+    credentials: {
+      accessKeyId: ai_access_key,
+      secretAccessKey: ai_secret_key,
+      sessionToken: ai_session_token || undefined
+    }
+  });
+
+  let body;
+  if (ai_model.startsWith('anthropic.')) {
+    body = JSON.stringify({
+      anthropic_version: 'bedrock-2023-05-31',
+      max_tokens: 400,
+      temperature: 0.4,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: buildQuestionPrompt(game, question)
+            }
+          ]
+        }
+      ]
+    });
+  } else {
+    body = JSON.stringify({
+      inputText: buildQuestionPrompt(game, question),
+      textGenerationConfig: {
+        maxTokenCount: 400,
+        temperature: 0.4
+      }
+    });
+  }
+
+  const command = new InvokeModelCommand({
+    modelId: ai_model,
+    contentType: 'application/json',
+    accept: 'application/json',
+    body
+  });
+
+  const response = await client.send(command);
+  const raw = new TextDecoder().decode(response.body);
+  if (ai_model.startsWith('anthropic.')) {
+    const json = JSON.parse(raw);
+    const contents = json?.content || json?.output || json?.output_text || [];
+    if (Array.isArray(contents)) {
+      return contents.map((item) => item?.text || '').join('\n').trim();
+    }
+    if (typeof contents === 'string') return contents.trim();
+    return (json?.result || raw || '').trim();
+  }
+  const json = JSON.parse(raw);
+  const text = json?.results?.[0]?.outputText || json?.completions?.[0]?.data?.text || raw;
+  return unwrapChatContent(text || '').trim();
+}
+
+export async function askQuestionWithProvider(game, question, userSettings = {}) {
+  const rawProvider = (userSettings.ai_provider || 'local').toLowerCase();
+  const provider = rawProvider === 'auto' ? 'local' : rawProvider;
+  try {
+    if (provider === 'xai') {
+      return await askWithXAI(game, question, userSettings);
+    }
+    if (provider === 'openai') {
+      return await askWithOpenAI(game, question, userSettings);
+    }
+    if (provider === 'anthropic') {
+      return await askWithAnthropic(game, question, userSettings);
+    }
+    if (provider === 'huggingface') {
+      return await askWithHuggingFace(game, question, userSettings);
+    }
+    if (provider === 'replicate') {
+      return await askWithReplicate(game, question, userSettings);
+    }
+    if (provider === 'bedrock') {
+      return await askWithBedrock(game, question, userSettings);
+    }
+  } catch (error) {
+    console.warn('[AI provider] Question failed, falling back to local answer.', error);
+  }
+
+  return answerQuestionLocally(game, question);
 }
 
 export async function analyzeWithProvider(game, userSettings = {}) {

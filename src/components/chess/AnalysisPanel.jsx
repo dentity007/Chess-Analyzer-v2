@@ -2,9 +2,17 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, AlertCircle, Target, TrendingUp, Brain, Lightbulb, HelpCircle } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Target, TrendingUp, Brain, Lightbulb, HelpCircle, Loader2 } from 'lucide-react';
 
-export default function AnalysisPanel({ analysis, aiInsights, aiQuestions = [] }) {
+export default function AnalysisPanel({ 
+  analysis, 
+  aiInsights, 
+  aiQuestions = [],
+  onQuestionSelect,
+  activeQuestion,
+  questionAnswer,
+  questionLoading
+}) {
   if (!analysis) {
     return (
       <Card className="bg-stone-800/50 border-stone-700">
@@ -148,19 +156,44 @@ export default function AnalysisPanel({ analysis, aiInsights, aiQuestions = [] }
               <HelpCircle className="w-5 h-5 text-amber-400" />
               Study Prompts
             </CardTitle>
+            <p className="text-xs text-stone-500">Tap a prompt to ask your AI coach.</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {questions.map((question, idx) => (
-              <div
+              <button
+                type="button"
                 key={`${idx}-${question.slice(0, 12)}`}
-                className="p-3 bg-stone-700/40 rounded-lg border border-stone-700/80"
+                onClick={() => onQuestionSelect?.(question)}
+                disabled={questionLoading && activeQuestion === question}
+                className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                  activeQuestion === question
+                    ? 'bg-amber-500/10 border-amber-500/50'
+                    : 'bg-stone-700/40 border-stone-700/80 hover:border-amber-500/40'
+                }`}
               >
                 <div className="flex items-start gap-3">
                   <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">Q{idx + 1}</Badge>
-                  <p className="text-sm text-stone-200 leading-relaxed">{question}</p>
+                  <div className="flex-1">
+                    <p className="text-sm text-stone-200 leading-relaxed">{question}</p>
+                    {questionLoading && activeQuestion === question && (
+                      <div className="flex items-center gap-2 text-xs text-amber-300 mt-2">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Asking your coach...
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </button>
             ))}
+
+            {(activeQuestion || questionAnswer) && (
+              <div className="p-3 bg-stone-700/50 rounded-lg border border-stone-600">
+                <div className="text-xs uppercase tracking-wide text-amber-300 mb-1">AI Response</div>
+                <p className="text-sm text-stone-200 whitespace-pre-wrap leading-relaxed">
+                  {questionAnswer || 'Waiting for a response...'}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

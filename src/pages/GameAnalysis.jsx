@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { platformClient } from '@/api/platformClient';
-import { analyzeWithProvider } from '@/api/aiProviders';
+import { analyzeWithProvider, askQuestionWithProvider } from '@/api/aiProviders';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/components/ui/use-toast';
 import { 
   ArrowLeft, 
   Brain, 
@@ -27,6 +28,8 @@ export default function GameAnalysis() {
   const gameId = urlParams.get('gameId');
   
   const [progress, setProgress] = useState({ visible: false, status: 'idle', progress: 0, message: '', type: 'analyze' });
+  const [activeQuestion, setActiveQuestion] = useState('');
+  const [questionAnswer, setQuestionAnswer] = useState('');
 
   // Fetch game
   const { data: game, isLoading: gameLoading } = useQuery({
@@ -103,6 +106,22 @@ export default function GameAnalysis() {
     }
   });
 
+  const askQuestionMutation = useMutation({
+    mutationFn: async (question) => {
+      if (!question) throw new Error('Select a question to ask.');
+      return askQuestionWithProvider(game, question, userSettings);
+    },
+    onSuccess: (answer) => {
+      setQuestionAnswer(answer);
+    },
+    onError: (error) => {
+      toast({
+        title: 'Unable to ask AI',
+        description: error.message || 'Try again after checking your AI settings.',
+      });
+    }
+  });
+
   if (gameLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 flex items-center justify-center">
@@ -130,6 +149,13 @@ export default function GameAnalysis() {
   }
 
   const analysis = existingAnalysis || analyzeMutation.data;
+
+  const handleQuestionSelect = (question) => {
+    if (askQuestionMutation.isPending) return;
+    setActiveQuestion(question);
+    setQuestionAnswer('');
+    askQuestionMutation.mutate(question);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950">
@@ -199,6 +225,10 @@ export default function GameAnalysis() {
               analysis={analysis}
               aiInsights={analysis?.ai_insights}
               aiQuestions={analysis?.ai_suggested_questions}
+              onQuestionSelect={handleQuestionSelect}
+              activeQuestion={activeQuestion}
+              questionAnswer={questionAnswer}
+              questionLoading={askQuestionMutation.isPending}
             />
 
             {/* Re-analyze button if already analyzed */}
