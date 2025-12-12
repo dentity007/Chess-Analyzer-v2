@@ -100,6 +100,7 @@ export default function Analysis() {
             blunders: analysisResult.blunders || [],
             mistakes: analysisResult.mistakes || [],
             ai_insights: analysisResult.coaching_advice || '',
+            ai_suggested_questions: analysisResult.suggested_questions || [],
             analyzed_at: Math.floor(Date.now() / 1000)
           };
 

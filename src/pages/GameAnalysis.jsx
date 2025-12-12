@@ -78,6 +78,7 @@ export default function GameAnalysis() {
         critical_moments: analysisResult.critical_moments || [],
         opening_phase: analysisResult.opening_assessment || '',
         ai_insights: analysisResult.coaching_advice || '',
+        ai_suggested_questions: analysisResult.suggested_questions || [],
         analyzed_at: Math.floor(Date.now() / 1000)
       };
 

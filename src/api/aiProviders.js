@@ -11,7 +11,8 @@ const JSON_INSTRUCTIONS = `Analyze this chess game PGN and respond with JSON usi
   "black_accuracy": number,
   "critical_moments": [{"move_number": number, "description": string}],
   "opening_assessment": string,
-  "coaching_advice": string
+  "coaching_advice": string,
+  "suggested_questions": string[]
 }
 Return ONLY valid JSON.`;
 
@@ -116,7 +117,8 @@ function normalizeAnalysis(json) {
     black_accuracy: json.black_accuracy || 0,
     critical_moments: json.critical_moments || [],
     opening_assessment: json.opening_assessment || '',
-    coaching_advice: json.coaching_advice || ''
+    coaching_advice: json.coaching_advice || '',
+    suggested_questions: json.suggested_questions || []
   };
 }
 

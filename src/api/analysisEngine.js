@@ -134,6 +134,31 @@ function summarizeOpening(game) {
   return 'The opening phase was balanced. Recording the exact line will make it easier to compare games later.';
 }
 
+function buildSuggestedQuestions(game, blunders, mistakes) {
+  const sampleMoves = (moves) => moves.slice(0, 3).map((m) => `${m.move_number}...${m.move}`).join(', ');
+  const notable = [...blunders, ...mistakes].sort((a, b) => Math.abs(b.evaluation_change) - Math.abs(a.evaluation_change));
+  const topMoves = sampleMoves(notable);
+  const opening = game?.opening || 'the opening phase';
+
+  const core = [
+    `What was the best continuation after move ${notable[0]?.move_number || 10}, and how should the disadvantaged side have equalized?`,
+    `How could ${opening} have been improved to secure a small plus out of the opening?`,
+    `Identify the critical tactical motif missed around moves ${topMoves || '10-20'} and provide the exact refutation line.`,
+    `Given the resulting pawn structure, what long-term plan should each side adopt (minor-piece placement, pawn breaks, target squares)?`,
+    `Where did the evaluation start to drift, and what practical defensive resources were available to hold the position?`
+  ];
+
+  const followUps = [
+    'Show a move-by-move alternative line that keeps equality through the middlegame.',
+    'List common traps or tactical shots in this opening that I should rehearse.',
+    'Provide a three-point endgame plan based on the remaining material and pawn majorities.',
+    'Suggest a drill to avoid repeating the same blunder pattern seen in this game.',
+    'Summarize the key positional imbalances (space, king safety, pawn structure) and how to leverage them next time.'
+  ];
+
+  return [...core, ...followUps];
+}
+
 export async function analyzeGameLocally(game = {}) {
   const moves = parseMoves(game.pgn);
   const { blunders, mistakes } = classifyMoves(moves);
@@ -152,7 +177,8 @@ export async function analyzeGameLocally(game = {}) {
     coaching_advice: buildCoachingAdvice(game, blunders, mistakes, {
       white: whiteAccuracy,
       black: blackAccuracy
-    })
+    }),
+    suggested_questions: buildSuggestedQuestions(game, blunders, mistakes)
   };
 
   return new Promise((resolve) => setTimeout(() => resolve(analysis), 180));
