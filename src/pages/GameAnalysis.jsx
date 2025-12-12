@@ -198,6 +198,7 @@ export default function GameAnalysis() {
             <AnalysisPanel 
               analysis={analysis}
               aiInsights={analysis?.ai_insights}
+              aiQuestions={analysis?.ai_suggested_questions}
             />
 
             {/* Re-analyze button if already analyzed */}

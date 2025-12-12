@@ -2,9 +2,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, AlertCircle, Target, TrendingUp, Brain, Lightbulb } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Target, TrendingUp, Brain, Lightbulb, HelpCircle } from 'lucide-react';
 
-export default function AnalysisPanel({ analysis, aiInsights }) {
+export default function AnalysisPanel({ analysis, aiInsights, aiQuestions = [] }) {
   if (!analysis) {
     return (
       <Card className="bg-stone-800/50 border-stone-700">
@@ -18,6 +18,7 @@ export default function AnalysisPanel({ analysis, aiInsights }) {
   }
 
   const { summary, blunders = [], mistakes = [] } = analysis;
+  const questions = Array.isArray(aiQuestions) ? aiQuestions.filter(Boolean) : [];
 
   return (
     <div className="space-y-4">
@@ -133,6 +134,31 @@ export default function AnalysisPanel({ analysis, aiInsights }) {
                   </span>
                 </div>
                 <Badge className="bg-orange-500/20 text-orange-300">Mistake</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Suggested Questions */}
+      {questions.length > 0 && (
+        <Card className="bg-stone-800/50 border-stone-700">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <HelpCircle className="w-5 h-5 text-amber-400" />
+              Study Prompts
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {questions.map((question, idx) => (
+              <div
+                key={`${idx}-${question.slice(0, 12)}`}
+                className="p-3 bg-stone-700/40 rounded-lg border border-stone-700/80"
+              >
+                <div className="flex items-start gap-3">
+                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">Q{idx + 1}</Badge>
+                  <p className="text-sm text-stone-200 leading-relaxed">{question}</p>
+                </div>
               </div>
             ))}
           </CardContent>
