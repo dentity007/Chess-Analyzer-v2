@@ -68,16 +68,62 @@ function buildCriticalMoments(blunders, mistakes) {
 
 function buildCoachingAdvice(game, blunders, mistakes, accuracy) {
   const tips = [];
-  if (blunders.length > 0) {
-    tips.push(`Review the tactics around move ${blunders[0].move_number} where ${blunders[0].player} faltered.`);
+  const totalIssues = blunders.length + mistakes.length;
+  const resultText = game?.result === '1-0'
+    ? 'White converted the game.'
+    : game?.result === '0-1'
+      ? 'Black converted the game.'
+      : 'The game ended in a draw.';
+
+  // Phase-aware guidance so feedback feels specific and actionable
+  const phaseBuckets = { opening: [], middlegame: [], endgame: [] };
+  [...blunders, ...mistakes].forEach((entry) => {
+    if (entry.move_number <= 12) {
+      phaseBuckets.opening.push(entry);
+    } else if (entry.move_number <= 30) {
+      phaseBuckets.middlegame.push(entry);
+    } else {
+      phaseBuckets.endgame.push(entry);
+    }
+  });
+
+  const topSwing = [...blunders, ...mistakes]
+    .sort((a, b) => Math.abs(b.evaluation_change) - Math.abs(a.evaluation_change))[0];
+
+  if (topSwing) {
+    tips.push(
+      `Largest swing: ${topSwing.player === 'white' ? 'White' : 'Black'} played ${topSwing.move} on move ${topSwing.move_number}, costing roughly ${Math.abs(topSwing.evaluation_change)} centipawns. Revisit that branch with an engine and compare tactical motifs.`
+    );
   }
-  if (mistakes.length > 2) {
-    tips.push('Several light inaccuracies crept in during the middlegame—slow down and calculate forcing replies.');
+
+  const addPhaseNote = (label, entries) => {
+    if (entries.length === 0) return;
+    const sample = entries.slice(0, 2).map((e) => `${e.move_number} (${e.move})`).join(', ');
+    tips.push(`${label}: ${entries.length} critical slip${entries.length > 1 ? 's' : ''} around moves ${sample}. Slow down here; calculate checks, captures, and forcing moves before committing.`);
+  };
+
+  addPhaseNote('Opening discipline', phaseBuckets.opening);
+  addPhaseNote('Middlegame decision-making', phaseBuckets.middlegame);
+  addPhaseNote('Endgame technique', phaseBuckets.endgame);
+
+  if (totalIssues === 0) {
+    tips.push('Clean tactical sheet—no blunders or flagged mistakes. Consider deepening your plan annotations to squeeze extra accuracy from equal positions.');
+  } else if (blunders.length > 0 && mistakes.length === 0) {
+    tips.push('Only major errors were flagged; one or two heavy tactical misses swung the evaluation. Train on similar motifs to avoid single-move collapses.');
+  } else if (mistakes.length > 3) {
+    tips.push('Several light inaccuracies accumulated. Tighten move selection by pruning impulsive candidate moves and comparing two concrete lines each turn.');
   }
+
   if (!game?.opening) {
-    tips.push('Consider annotating your opening choices so trends are easier to spot.');
+    tips.push('Opening unspecified—log your repertoire line so you can compare branches and prep improvements for the next outing.');
+  } else {
+    tips.push(`Opening: ${game.opening}. Review the first 10 moves to confirm piece placement matched your prep and that you achieved the desired pawn structure.`);
   }
-  tips.push(`Overall accuracy landed at ${accuracy.white}% as White and ${accuracy.black}% as Black. Focus on keeping concentration in critical moments.`);
+
+  tips.push(
+    `${resultText} Accuracy: ${accuracy.white}% as White, ${accuracy.black}% as Black. Track whether the lower side is consistently underperforming and run targeted drills for that color.`
+  );
+
   return tips.join(' ');
 }
 
